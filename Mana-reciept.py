@@ -11,15 +11,16 @@ from random import randrange
 from datetime import date
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import ParagraphStyle
 
 
 
 # Read the main CSV file into a pandas DataFrame
-csv_file_path = '/home/rostam/Desktop/Customers.csv'
+csv_file_path = 'Customers.csv'
 df_customers = pd.read_csv(csv_file_path, delimiter='\t')
 
 # Read the services CSV file into a pandas DataFrame
-services_file_path = '/home/rostam/Desktop/Services.csv'
+services_file_path = 'Services.csv'
 df_services = pd.read_csv(services_file_path, delimiter='\t')
 
 
@@ -30,12 +31,12 @@ def create_receipt(customer_name, customer_address, customer_id, df_service):
     c.setFont("Helvetica", 12)
 
     # Create a SimpleDocTemplate with letter size and set the font
-    doc = SimpleDocTemplate(pdf_file_path, pagesize=letter)
-    story = []
+    # doc = SimpleDocTemplate(pdf_file_path, pagesize=letter)
+    # story = []
 
     # Header with provider's logo
     header_frame = Frame(5, 740, 500, 100, showBoundary=0)
-    logo_path = '/home/rostam/Desktop/GTR.jpeg'  # Replace with the path to your provider's logo
+    logo_path = 'GTR.jpeg'  # Replace with the path to your provider's logo
     # c.drawImage(logo_path, 172, 740, width=100, height=50)
     logo = Image(logo_path, width=100, height=50)
     c.setFillColor(colors.gray)
@@ -50,10 +51,27 @@ def create_receipt(customer_name, customer_address, customer_id, df_service):
     # Draw a horizontal line below the header
     c.line(50, 710, 550, 710)
 
+    c.line(50, 50, 550, 50)
     # Footer with provider's address
-    # footer_frame = Frame(0, 0, 550, 50, showBoundary=0)
+    # footer_frame = Frame(0, 0, 740, 50, showBoundary=0)
     # footer_text = Paragraph(f"Provider's Address: {provider_address}", getSampleStyleSheet()["Normal"])
     # footer_frame.addFromList([footer_text], c)
+    c.setFont("Helvetica", 8)
+    c.drawString(50, 40, "GTR")
+    c.drawString(50, 30, "Nelsenstr 1")
+    c.drawString(50, 20, "41748 Viersen")
+
+    c.drawString(170, 40, "+49 176 5579 1865")
+    c.drawString(170, 30, "gtr.renovierung@outlook.com")
+    c.drawString(170, 20, "Geschäftsführer: H. Ghaderi")
+
+    c.drawString(290, 40, "Bank N26")
+    c.drawString(290, 30, "DE07100110012033287789")
+    c.drawString(290, 20, "BIC: NTSBDEB1XXX")
+
+    c.drawString(410, 40, "Ust. ID: DE361613180")
+    c.drawString(410, 30, "")
+    c.drawString(410, 20, "Amtsgericht Viersen")
 
     # Customer address on the top left
     c.drawString(72, 680, customer_name)
@@ -61,21 +79,24 @@ def create_receipt(customer_name, customer_address, customer_id, df_service):
 
     # Provider address on the top right
     a_nr = randrange(1000, 100000)
+    c.setFont("Helvetica-Bold", 10)
     c.drawString(400, 680, f"Antragnummer: {a_nr}")
     c.drawString(400, 660, f"Datum: {date.today()}")
     c.drawString(400, 640, f"Kundennr.: {customer_id}")
     c.drawString(400, 620, f"Ansprechpartner.: Mana Moli")
 
     # Set greeting text
-    # c.setFont("Helvetica-Bold", 14)
-    # c.drawString(72, 620, "Dear " + customer_name + ",")
-    # c.setFont("Helvetica", 12)
-    # c.drawString(72, 600, "Thank you for choosing our services. We are pleased to provide the following services:")
+    c.setFont("Helvetica-Bold", 10)
+    c.drawString(72, 620, "Sehr geehrte " + customer_name + ",")
+    c.setFont("Helvetica", 10)
+    c.drawString(72, 600, "vielen Dank für Ihren Auftrag. Gemäß unseres Angebotes erbringen wir folgende Leistungen:")
 
-    c.setFont("Helvetica-Bold", 14)
-    story.append(Paragraph("Dear Valued Customer,", c))
-    c.setFont("Helvetica", 12)
-    story.append(Paragraph("Thank you for choosing our services. We are pleased to provide the following services:", c))
+    # story
+    # c.setFont("Helvetica-Bold", 14)
+    # story.append(Paragraph("Dear Valued Customer,", c))
+    # c.setFont("Helvetica", 12)
+    # story.append(Paragraph("Thank you for choosing our services. We are pleased to provide the following services:", c))
+
 
     # Add a vertical space (margin) after the header
     c.drawString(72, 570, "")  # You can adjust the vertical position as needed
@@ -86,7 +107,7 @@ def create_receipt(customer_name, customer_address, customer_id, df_service):
     vertical_position = greeting_text_height - vertical_margin
 
     # Add a vertical space (margin) after the header
-    story.append(Paragraph("", c))
+    # story.append(Paragraph("", c))
     # List of provided services and prices in a table
     data = [['Pos.', 'Service', 'Count', 'Einzelprice', 'Gesamtpreis']]  # Add 'Count' column as the third column
     for idx, row in df_service.iterrows():
@@ -105,17 +126,41 @@ def create_receipt(customer_name, customer_address, customer_id, df_service):
     ]))
 
     # Calculate the required height of the table
-    # width, height = table.wrap(400, 200)
-    # table.drawOn(c, 72, vertical_position - height)
-    #
-    # # Save the canvas
-    # c.save()
+    width, height = table.wrap(400, 200)
+    table.drawOn(c, 72, vertical_position - height - 50)
+
+    style = ParagraphStyle(
+        'Normal',
+        fontSize=10,
+        fontName='Helvetica',
+    )
+
+    c.setFont("Helvetica", 10)
+    # c.drawString(72, vertical_position - height - 50 - 100,
+    text ="""Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG wird Umsatzsteuer nicht berechnet.
+Die Preise sind ohne Materialkosten. Die Kosten für die benötigten und gekauften Materialien müssen gleichzeitig
+mit der Lieferung der Quittung beglichen werden.
+Zahlungsbedingungen: Zahlbar in bar bei Übergabe oder binnen 7 Tage nach Leistungsdatum per Überweisung.
+Wir bedanken uns für den Auftrag und freuen uns auf die angenehme Zusammenarbeit.
+Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.
+Hiermit bestätige ich die obigen Auftrag."""
+
+
+    paragraph = Paragraph(text, style)
+    width, height = paragraph.wrap(400, 200)
+
+    # paragraph_position =
+
+    paragraph.drawOn(c, 72, vertical_position - height - 50 - 300)
+
+    # Save the canvas
+    c.save()
 
     # Add the table to the story
-    story.append(table)
+    # story.append(table)
 
     # Build the story and create the PDF
-    doc.build(story)
+    # doc.build(story)
     return a_nr
 
 
