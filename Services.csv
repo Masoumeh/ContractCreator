@@ -1,13 +1,13 @@
-id	service	Menge	Einzelpreis
-125	bad renovierung	2	200
-125	Malen	3	300
-125	Boden	2	400
-125	Malen2	3	800
-125	Malen3	3	800
-125	Malen4	3	800
-125	Malen5	3	800
-125	Malen6	3	800
-125	Malen7	3	800
-125	Malen8	3	800
-125	Malen9	3	800
-125	Malen10	3	800
+id	service	Einheit	Menge	Einzelpreis
+125	bad renovierung	m2	2	200
+125	Malen	Stk.	3	300
+125	Boden	Stk.	2	400
+125	Malen2	Stk.	3	800
+125	Malen3	Stk.	3	800
+125	Malen4	Stk.	3	800
+125	Malen5	Stk.	3	800
+125	Malen6	Stk.	3	800
+125	Malen7	Stk.	3	800
+125	Malen8	Stk.	3	800
+125	Malen9	Stk.	3	800
+125	Malen10	Stk.	3	800
