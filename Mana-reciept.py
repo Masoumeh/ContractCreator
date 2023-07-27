@@ -11,26 +11,24 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import locale
 import math
 
-# locale.setlocale(locale.LC_ALL, 'de')
 
-
-# Read the main CSV file into a pandas DataFrame
-csv_file_path = 'Customers.csv'
-df_customers = pd.read_csv(csv_file_path, delimiter='\t')
+# Read the customers' CSV file into a pandas DataFrame
+c_file_path = 'Customers.csv'
+df_customers = pd.read_csv(c_file_path, delimiter='\t')
 
 # Read the services CSV file into a pandas DataFrame
 services_file_path = 'Services2.csv'
 df_services = pd.read_csv(services_file_path, delimiter='\t')
 
-# Read the document type CSV file into a pandas DataFrame
+# Read the document info CSV file into a pandas DataFrame
 doc_file_path = 'doc_info.csv'
 df_doc = pd.read_csv(doc_file_path, delimiter='\t')
 
 
 # Function to create the PDF receipt
-def create_receipt(doc_ttl, greeting_txt, main_txt, doc_nr_type, doc_nr, customer_name, customer_address, #customer_address2,
+def create_receipt(doc_ttl, greeting_txt, main_txt, doc_nr_type, doc_nr, customer_name, customer_address, customer_city,
                    customer_tel, customer_id, df_service):
-    pdf_file_path = f"{customer_name}_{doc_nr_type}.pdf"
+    pdf_file_path = f"{customer_name}_{doc_ttl}.pdf"
     c = canvas.Canvas(pdf_file_path, pagesize=letter)
     c.setFont("Helvetica", 12)
 
@@ -83,8 +81,8 @@ def create_receipt(doc_ttl, greeting_txt, main_txt, doc_nr_type, doc_nr, custome
     c.setFont("Helvetica-Bold", 8)
     c.drawString(72, 680, customer_name)
     c.drawString(72, 665, customer_address)
-    # c.drawString(72, 650, customer_address2)
-    c.drawString(72, 650, "Tel. " + customer_tel)
+    c.drawString(72, 650, customer_city)
+    c.drawString(72, 635, "Tel. " + customer_tel)
 
     # Provider address on the top right
     c.setFont("Helvetica-Bold", 8)
@@ -192,7 +190,7 @@ def create_receipt(doc_ttl, greeting_txt, main_txt, doc_nr_type, doc_nr, custome
 
     # paragraph_position =
 
-    paragraph.drawOn(c, 72, vertical_position - height - 320)
+    paragraph.drawOn(c, 72, vertical_position - height - 345)
 
     # Save the canvas
     c.save()
@@ -219,7 +217,7 @@ else:
         row_customer = df_customers[df_customers['id'] == c_id].iloc[0]
         c_name = row_customer['name']
         c_addr = row_customer['address']
-        # c_addr2 = row_customer['address2']
+        c_city = row_customer['city']
         c_tel = row_customer['tel']
         provider_name = 'GTR'  # row_customer['Service Provider Name']
         provider_address = 'Nelsensrt 1'  # row_customer['Service Provider Address']
@@ -243,10 +241,10 @@ else:
         if math.isnan(d_nr):
             d_nr = randint(1000, 100000)
             df_customers.loc[df_customers["id"] == c_id, "doc_nr"] = d_nr
-            df_customers.to_csv(re.sub(".csv", "_updated.csv", csv_file_path), sep='\t')
+            df_customers.to_csv(c_file_path, sep='\t')
 
         # Create the PDF receipt
-        create_receipt(doc_title, greet_txt, body_txt, nr_type, d_nr, c_name, c_addr, #c_addr2,
+        create_receipt(doc_title, greet_txt, body_txt, nr_type, int(d_nr), c_name, c_addr, c_city,
                                  str(c_tel), c_id, df_services_for_customer)
 
         print("Receipt generated successfully.")
