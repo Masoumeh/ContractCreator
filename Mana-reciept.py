@@ -5,10 +5,12 @@ from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle, Frame, Paragraph, SimpleDocTemplate
 from reportlab.platypus.flowables import Image
 from reportlab.lib import colors
-from random import randrange
+from random import randint
 from datetime import date
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 import locale
+import math
+
 # locale.setlocale(locale.LC_ALL, 'de')
 
 
@@ -24,10 +26,11 @@ df_services = pd.read_csv(services_file_path, delimiter='\t')
 doc_file_path = 'doc_info.csv'
 df_doc = pd.read_csv(doc_file_path, delimiter='\t')
 
+
 # Function to create the PDF receipt
-def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_address1, customer_address2,
+def create_receipt(doc_ttl, greeting_txt, main_txt, doc_nr_type, doc_nr, customer_name, customer_address, #customer_address2,
                    customer_tel, customer_id, df_service):
-    pdf_file_path = f"{customer_name}_receipt.pdf"
+    pdf_file_path = f"{customer_name}_{doc_nr_type}.pdf"
     c = canvas.Canvas(pdf_file_path, pagesize=letter)
     c.setFont("Helvetica", 12)
 
@@ -44,7 +47,7 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
 
     # Move "Auftragsbestätigung" text to right above the horizontal line
     c.setFont("Helvetica-Bold", 14)
-    c.drawString(72, 730, letter_type)
+    c.drawString(72, 730, doc_ttl)
     c.drawRightString(523, 755, "Provider Logo")
     # c.drawRightString(523, 735, "Provider Name")
     # c.drawRightString(523, 715, "Provider Address")
@@ -79,31 +82,30 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
     # Customer address on the top left
     c.setFont("Helvetica-Bold", 8)
     c.drawString(72, 680, customer_name)
-    c.drawString(72, 665, customer_address1)
-    c.drawString(72, 650, customer_address2)
-    c.drawString(72, 635, "Tel. " + customer_tel)
+    c.drawString(72, 665, customer_address)
+    # c.drawString(72, 650, customer_address2)
+    c.drawString(72, 650, "Tel. " + customer_tel)
 
     # Provider address on the top right
-    a_nr = randrange(1000, 100000)
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(400, 680, f"Antragnummer: {a_nr}")
+    c.drawString(400, 680, f"{doc_nr_type}: {doc_nr}")
     c.drawString(400, 665, f"Datum: {date.today()}")
     c.drawString(400, 650, f"Kundennr.: {customer_id}")
     c.drawString(400, 635, f"Ansprechpartner.: Mana Moli")
 
     # Set greeting text
     c.setFont("Helvetica-Bold", 10)
-    c.drawString(72, 600, "Sehr geehrte " + customer_name + ",")
+    c.setFillColor(colors.black)
+    c.drawString(72, 600, "Sehr geehrte(r) " + customer_name + ",")
     c.setFont("Helvetica", 10)
     c.drawString(72, 580, greeting_txt)
-                 #"vielen Dank für Ihren Auftrag. Gemäß unseres Angebotes erbringen wir folgende Leistungen:")
+    # "vielen Dank für Ihren Auftrag. Gemäß unseres Angebotes erbringen wir folgende Leistungen:")
 
     # story
     # c.setFont("Helvetica-Bold", 14)
     # story.append(Paragraph("Dear Valued Customer,", c))
     # c.setFont("Helvetica", 12)
     # story.append(Paragraph("Thank you for choosing our services. We are pleased to provide the following services:", c))
-
 
     # Add a vertical space (margin) after the header
     c.drawString(72, 570, "")  # You can adjust the vertical position as needed
@@ -116,10 +118,12 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
     # Add a vertical space (margin) after the header
     # story.append(Paragraph("", c))
     # List of provided services and prices in a table
-    data = [['Pos.', 'Leistung', 'Einheit', 'Menge', 'Einzelprice', 'Gesamtpreis']]  # Add 'Count' column as the third column
+    data = [['Pos.', 'Leistung', 'Einheit', 'Menge', 'Einzelprice',
+             'Gesamtpreis']]  # Add 'Count' column as the third column
     df_service['total_sum'] = df_service['Menge'] * df_service['Einzelpreis']
     for idx, row in df_service.iterrows():
-        data.append([str(idx + 1), row['service'], row['Einheit'], str(row['Menge']), #locale.format('%.4f', row['Einzelpreis'], 1),
+        data.append([str(idx + 1), row['service'], row['Einheit'], str(row['Menge']),
+                     # locale.format('%.4f', row['Einzelpreis'], 1),
                      f"€{row['Einzelpreis']:,.2f}",
                      f"€{row['total_sum']:,.2f}"])
     # add the last row for the total sum of all prices
@@ -127,8 +131,8 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
     table = Table(data)
     table.setStyle(TableStyle([
         # Set borders for the entire table
-        #('BOX', (0, 0), (-1, -1), 1, colors.black),  # Draw border around the entire table
-        #('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Draw inner grid lines
+        # ('BOX', (0, 0), (-1, -1), 1, colors.black),  # Draw border around the entire table
+        # ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.black),  # Draw inner grid lines
 
         # Set custom borders for specific cells
         # ('BOX', (0, 0), (-1, 0), 1, colors.black),  # Draw border for the header row
@@ -159,7 +163,7 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
 
     # Calculate the required height of the table
     width, height = table.wrap(400, 200)
-    table.drawOn(c, 72, vertical_position - height - 50)
+    table.drawOn(c, 72, vertical_position - height - 25)
 
     style = ParagraphStyle(
         'Normal',
@@ -170,13 +174,13 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
     c.setFont("Helvetica", 10)
     # c.drawString(72, vertical_position - height - 50 - 100,
     text = main_txt
-    #"""Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG wird Umsatzsteuer nicht berechnet.\n
-# Die Preise sind ohne Materialkosten. Die Kosten für die benötigten und gekauften Materialien müssen gleichzeitig
-# mit der Lieferung der Quittung beglichen werden.\n
-# Zahlungsbedingungen: Zahlbar in bar bei Übergabe oder binnen 7 Tage nach Leistungsdatum per Überweisung.
-# Wir bedanken uns für den Auftrag und freuen uns auf die angenehme Zusammenarbeit.\n
-# Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.\n
-# Hiermit bestätige ich die obigen Auftrag.\n Unterschrift:___________________"""
+    # """Als Kleinunternehmer im Sinne von § 19 Abs. 1 UStG wird Umsatzsteuer nicht berechnet.\n
+    # Die Preise sind ohne Materialkosten. Die Kosten für die benötigten und gekauften Materialien müssen gleichzeitig
+    # mit der Lieferung der Quittung beglichen werden.\n
+    # Zahlungsbedingungen: Zahlbar in bar bei Übergabe oder binnen 7 Tage nach Leistungsdatum per Überweisung.
+    # Wir bedanken uns für den Auftrag und freuen uns auf die angenehme Zusammenarbeit.\n
+    # Bei Rückfragen stehen wir selbstverständlich jederzeit gerne zur Verfügung.\n
+    # Hiermit bestätige ich die obigen Auftrag.\n Unterschrift:___________________"""
 
     # text = text.replace('\n','<br />\n')
     style = getSampleStyleSheet()
@@ -198,12 +202,12 @@ def create_receipt(letter_type, greeting_txt, main_txt, customer_name, customer_
 
     # Build the story and create the PDF
     # doc.build(story)
-    return a_nr
 
 
 # Ask for customer's ID as input
-c_id = 125#int(input("Enter customer's ID: "))
+c_id = 125  # int(input("Enter customer's ID: "))
 doc_type = input("Enter the document type: ")
+
 if doc_type not in df_doc['doc_type'].values:
     print("Document type not found.")
 else:
@@ -214,11 +218,11 @@ else:
         # Extract customer information from the main DataFrame using customer ID
         row_customer = df_customers[df_customers['id'] == c_id].iloc[0]
         c_name = row_customer['name']
-        c_addr1 = row_customer['address1']
-        c_addr2 = row_customer['address2']
+        c_addr = row_customer['address']
+        # c_addr2 = row_customer['address2']
         c_tel = row_customer['tel']
-        provider_name = 'GTR'#row_customer['Service Provider Name']
-        provider_address = 'Nelsensrt 1'#row_customer['Service Provider Address']
+        provider_name = 'GTR'  # row_customer['Service Provider Name']
+        provider_address = 'Nelsensrt 1'  # row_customer['Service Provider Address']
 
         # Extract services for the customer from the services DataFrame using customer ID
         df_services_for_customer = df_services[df_services['id'] == c_id]
@@ -233,9 +237,16 @@ else:
         greet_txt = df_doc[df_doc['doc_type'] == doc_type]['greet_text'].values[0]
         body_txt = df_doc[df_doc['doc_type'] == doc_type]['main_text'].values[0]
 
+        nr_type = df_doc[df_doc['doc_type'] == doc_type]['nr_type'].values[0]
+        doc_title = df_doc[df_doc['doc_type'] == doc_type]['doc_title'].values[0]
+        d_nr = df_customers[df_customers['id'] == c_id]['doc_nr'].values[0]
+        if math.isnan(d_nr):
+            d_nr = randint(1000, 100000)
+            df_customers.loc[df_customers["id"] == c_id, "doc_nr"] = d_nr
+            df_customers.to_csv(re.sub(".csv", "_updated.csv", csv_file_path), sep='\t')
+
         # Create the PDF receipt
-        auf_nr = create_receipt(doc_type, greet_txt, body_txt, c_name, c_addr1,
-                                c_addr2, str(c_tel), c_id, df_services_for_customer)
-        df_customers.loc[df_customers["id"] == c_id, "a_nr"] = auf_nr
-        df_customers.to_csv(re.sub(".csv", "_updated.csv", csv_file_path), sep='\t')
+        create_receipt(doc_title, greet_txt, body_txt, nr_type, d_nr, c_name, c_addr, #c_addr2,
+                                 str(c_tel), c_id, df_services_for_customer)
+
         print("Receipt generated successfully.")
